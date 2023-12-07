@@ -31,8 +31,8 @@ export const signin = async (req, res, next) => {
         const validPassword = bcryptjs.compareSync(password, validUser.password);
         if (!validPassword) return next(errorHandler(401, "Wrong Credentials. Please check your Email id and password"))
         const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET)
-       
-       const {password:pass,...data} = validUser._doc;
+
+        const { password: pass, ...data } = validUser._doc;
 
         res.cookie('access_token', token, {
             httpOnly: true,
@@ -41,6 +41,48 @@ export const signin = async (req, res, next) => {
             data
         })
     } catch (err) {
+        next(err)
+    }
+
+}
+
+
+export const gSignIn = async (req, res, next) => {
+
+    try {
+
+        const user = await User.findOne({ email: req.body.email })
+        if (user) {
+
+            const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
+            const { password: pass, ...rest } = user._doc;
+            res.cookie('access_token', token, {
+                httpOnly: true,
+            }).status(200).json(rest)
+
+        } else {
+
+            const generatePassword = Math.random().toString(36).slice(-8);
+            const hashedPassword = bcryptjs.hashSync(generatePassword,10);
+            const newUser = new User({ username: req.body.name, email: req.body.email,password:hashedPassword, avatar:req.body.avatar})
+
+            try{
+                await newUser.save()
+                const token =jwt.sign({id:newUser._id},process.env.JWT_SECRET)
+                const {password:pass, ...rest} = newUser._doc
+                res.cookie('access_token',token,{
+                    httpOnly:true
+                }).status(201).json(rest)
+
+            }catch(err){
+                next(err)
+            }
+
+        }
+
+
+    }
+    catch (err) {
         next(err)
     }
 
