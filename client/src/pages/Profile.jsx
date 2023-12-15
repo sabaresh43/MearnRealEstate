@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
-import { useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
+  updateUserStart,
   updateUserSuccess,
   updateUserFailure,
-  updateUserStart,
-  signInFailure,
-  signInSuccess,
-} from "../redux/user/userSlice.js";
+  deleteUserFailure,
+  deleteUserStart,
+  deleteUserSuccess,
+} from "../redux/user/userSlice";
 import {
   getDownloadURL,
   getStorage,
@@ -16,7 +16,6 @@ import {
   uploadBytesResumable,
 } from "firebase/storage";
 import { app } from "../firebase.js";
-import { useDispatch } from "react-redux";
 
 export default function Profile() {
   const fileRef = useRef(null);
@@ -66,36 +65,49 @@ export default function Profile() {
   const handleOnchange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       dispatch(updateUserStart());
-
-      const res = await fetch(
-        `/api/user/updateUserDetails/${currentUser._id}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
-
+      const res = await fetch(`/api/user/updateUserDetails/${currentUser._id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
       const data = await res.json();
       if (data.success === false) {
-        dispatch(signInFailure(data.message));
+        dispatch(updateUserFailure(data.message));
         return;
       }
-      dispatch(signInSuccess(data));
-      setUserUpdateSuccess(true)
+
+      dispatch(updateUserSuccess(data));
+      setUserUpdateSuccess(true);
+
       setTimeout(() => {
-        navigate("/");
+        navigate('/')
       }, 2000);
-     
-    } catch (err) {
-      dispatch(updateUserFailure(err.message));
-      console.log(err);
+    } catch (error) {
+      dispatch(updateUserFailure(error.message));
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    try {
+      dispatch(deleteUserStart());
+      const res = await fetch(`/api/user/deleteUserDetails/${currentUser._id}`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (data.success === false) {
+        dispatch(deleteUserFailure(data.message));
+        return;
+      }
+      dispatch(deleteUserSuccess(data));
+    } catch (error) {
+      dispatch(deleteUserFailure(error.message));
     }
   };
 
@@ -166,15 +178,22 @@ export default function Profile() {
       </form>
 
       <div className="mt-4 justify-between flex">
-        <span className="text-red-700 hover:font-extrabold">
+        <span
+          onClick={handleDeleteUser}
+          className="text-red-700 hover:font-extrabold"
+        >
           {" "}
           Delete Account
         </span>
         <span className="text-red-700 hover:font-extrabold"> Sign out</span>
       </div>
 
-      <p className="text-red-600 font-extrabold text-center mt-5">{error ? error : ""}</p>
-      <p className="text-green-500 font-extrabold text-center mt-5">{userUpdateSuccess ? "User details updated Successfully" : ""}</p>
+      <p className="text-red-600 font-extrabold text-center mt-5">
+        {error ? error : ""}
+      </p>
+      <p className="text-green-500 font-extrabold text-center mt-5">
+        {userUpdateSuccess ? "User details updated Successfully" : ""}
+      </p>
     </div>
   );
 }

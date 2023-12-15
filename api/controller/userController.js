@@ -35,3 +35,16 @@ export const updateUserDetails = async (req, res, next) => {
     next(err);
   }
 };
+
+export const deleteUserDetails = async (req, res, next) => {
+  if (req.user.id != req.params.id)
+    return next(errorHandler(401, "UnAuthorized Access"));
+
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.status(200).json(errorHandler(200, "User Deleted Successfully"));
+  } catch (Err) {
+    next(Err);
+    console.log(Err);
+  }
+};
