@@ -8,8 +8,9 @@ import {
   deleteUserFailure,
   deleteUserStart,
   deleteUserSuccess,
-  signOutUserStart,signOutUserFailure,
-  signOutUserSuccess
+  signOutUserStart,
+  signOutUserFailure,
+  signOutUserSuccess,
 } from "../redux/user/userSlice";
 import {
   getDownloadURL,
@@ -72,13 +73,16 @@ export default function Profile() {
     e.preventDefault();
     try {
       dispatch(updateUserStart());
-      const res = await fetch(`/api/user/updateUserDetails/${currentUser._id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const res = await fetch(
+        `/api/user/updateUserDetails/${currentUser._id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
       const data = await res.json();
       if (data.success === false) {
         dispatch(updateUserFailure(data.message));
@@ -89,7 +93,7 @@ export default function Profile() {
       setUserUpdateSuccess(true);
 
       setTimeout(() => {
-        navigate('/')
+        navigate("/");
       }, 2000);
     } catch (error) {
       dispatch(updateUserFailure(error.message));
@@ -99,9 +103,12 @@ export default function Profile() {
   const handleDeleteUser = async () => {
     try {
       dispatch(deleteUserStart());
-      const res = await fetch(`/api/user/deleteUserDetails/${currentUser._id}`, {
-        method: "POST",
-      });
+      const res = await fetch(
+        `/api/user/deleteUserDetails/${currentUser._id}`,
+        {
+          method: "POST",
+        }
+      );
       const data = await res.json();
       if (data.success === false) {
         dispatch(deleteUserFailure(data.message));
@@ -113,24 +120,21 @@ export default function Profile() {
     }
   };
 
-const handleSignOut = async()=>{
+  const handleSignOut = async () => {
+    try {
+      dispatch(signOutUserStart());
+      const res = await fetch("/api/auth/signOut");
+      const data = await res.json();
 
-try{
-  dispatch(signOutUserStart())
-  const res =  await fetch('/api/auth/signOut');
-  const data = await res.json();
-
-  if(data.success == false){
-    dispatch(signOutUserFailure(data.message))
-    return
-  }
-dispatch(signOutUserSuccess(data));
-}catch(err){
-  console.log(err);
-}
-
-}
-
+      if (data.success == false) {
+        dispatch(signOutUserFailure(data.message));
+        return;
+      }
+      dispatch(signOutUserSuccess(data));
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   return (
     <div className="p-3 max-w-lg mx-auto">
@@ -206,7 +210,13 @@ dispatch(signOutUserSuccess(data));
           {" "}
           Delete Account
         </span>
-        <span  onClick={handleSignOut}  className="text-red-700 hover:font-extrabold"> Sign out</span>
+        <span
+          onClick={handleSignOut}
+          className="text-red-700 hover:font-extrabold"
+        >
+          {" "}
+          Sign out
+        </span>
       </div>
 
       <p className="text-red-600 font-extrabold text-center mt-5">
